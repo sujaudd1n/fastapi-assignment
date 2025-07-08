@@ -1,5 +1,7 @@
 import json
 import os
+import time
+from collections import defaultdict
 from datetime import datetime
 from secrets import token_urlsafe
 from fastapi import FastAPI, HTTPException, Depends, Header
@@ -15,7 +17,7 @@ users = {
 
 login_tokens = {}
 prompt_history = {}
-request_log = {}
+request_log = defaultdict(list)
 
 class User(BaseModel):
     username: str
@@ -24,9 +26,19 @@ class User(BaseModel):
 class Prompt(BaseModel):
     prompt: str
 
+RATE_LIMIT = 5
+RATE_LIMIT_WINDOW = 60
 
-def check_ratelimit():
-    pass
+def check_ratelimit(username):
+    now = time.time()
+    window_start = now - RATE_LIMIT_WINDOW
+
+    request_log[username] = [t for t in request_log[username] if t > window_start]
+
+    if len(request_log[username]) >= RATE_LIMIT:
+        raise HTTPException(status_code=422, detail='Rate limit exceeded')
+
+    request_log[username].append(now)
 
 def save_history():
     with open(f"prompt-history.json", "w") as f:
@@ -57,7 +69,7 @@ async def login(user: User):
 
 @app.post("/prompt/") 
 async def prompt(prompt: Prompt, username = Depends(get_username)):
-    print(prompt_history)
+    check_ratelimit(username)
     response = "dummy response for now"
     if username not in prompt_history:
         prompt_history[username] = []
@@ -67,6 +79,7 @@ async def prompt(prompt: Prompt, username = Depends(get_username)):
         "response": response
         })
     save_history()
+    print(prompt_history)
     return {"response": response}
 
 @app.get("/history/") 
