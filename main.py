@@ -49,5 +49,5 @@ async def prompt(prompt: Prompt, username = Depends(get_username)):
     return {"response": response}
 
 @app.get("/history/") 
-async def history():
-    return {"message": "Not implemented"}
+async def history(username = Depends(get_username)):
+    return prompt_history.get(username, [])
