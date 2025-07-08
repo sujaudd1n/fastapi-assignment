@@ -1,5 +1,6 @@
+from datetime import datetime
 from secrets import token_urlsafe
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -11,10 +12,20 @@ users = {
 }
 
 login_tokens = {}
+prompt_history = {}
 
 class User(BaseModel):
     username: str
     password: str
+
+class Prompt(BaseModel):
+    prompt: str
+
+async def get_username(token = Header(..., alias="Authorization")):
+    token = token.split()[1]
+    if token not in login_tokens:
+        raise HTTPException(status_code=401, detail="token is not valid")
+    return login_tokens[token]
 
 @app.post("/login/") 
 async def login(user: User):
@@ -25,8 +36,17 @@ async def login(user: User):
     return {"token": token}
 
 @app.post("/prompt/") 
-async def prompt():
-    return {"message": "Not implemented"}
+async def prompt(prompt: Prompt, username = Depends(get_username)):
+    print(prompt_history)
+    response = "dummy response for now"
+    if username not in prompt_history:
+        prompt_history[username] = []
+    prompt_history[username].append({
+        "timestamp": datetime.now().isoformat(),
+        "prompt": prompt.prompt,
+        "response": response
+        })
+    return {"response": response}
 
 @app.get("/history/") 
 async def history():
