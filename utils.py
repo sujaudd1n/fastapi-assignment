@@ -3,6 +3,12 @@ import time
 import json
 from collections import defaultdict
 from fastapi import HTTPException
+from google import genai
+
+if os.environ.get("LLM_API_KEY"):
+    client = genai.Client(api_key=os.environ.get("LLM_API_KEY"))
+else:
+    client = None
 
 request_log = defaultdict(list)
 RATE_LIMIT = 5 
@@ -32,4 +38,13 @@ def load_history():
                 return {}
     return {}
 
-
+def get_llm_response(prompt):
+    if client:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        ).text
+    else:
+        response = "Let me think"
+    print(response)
+    return response

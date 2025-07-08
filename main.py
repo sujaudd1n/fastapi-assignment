@@ -4,7 +4,7 @@ from datetime import datetime
 from secrets import token_hex
 from fastapi import FastAPI, HTTPException, Depends, Header
 from models import User, Prompt
-from utils import check_ratelimit, load_history, save_history
+from utils import check_ratelimit, load_history, save_history, get_llm_response
 
 app = FastAPI()
 
@@ -39,7 +39,7 @@ async def login(user: User):
 @app.post("/prompt/") 
 async def prompt(prompt: Prompt, username = Depends(get_username)):
     check_ratelimit(username)
-    response = "dummy response for now"
+    response = get_llm_response(prompt.prompt)
     prompt_history[username].append({
         "timestamp": datetime.now().isoformat(),
         "prompt": prompt.prompt,

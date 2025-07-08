@@ -11,6 +11,7 @@ submit text prompts, and get AI-style responses.
 - Basic error handling
 - Basic Rate limiting
 - Save history as JSON locally
+- Integration with LLM
 
 ## Installation
 
@@ -20,6 +21,7 @@ submit text prompts, and get AI-style responses.
    - Windows: `venv\Scripts\activate`
    - Unix/MacOS: `source venv/bin/activate`
 4. Install dependencies: `pip install -r requirements.txt`
+6. Optional: Export gemini api key `LLM_API_KEY` to use gemini LLM response
 5. Run the application: `fastapi dev main.py`
 
 ## Files
