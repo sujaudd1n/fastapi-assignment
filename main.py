@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from secrets import token_urlsafe
 from fastapi import FastAPI, HTTPException, Depends, Header
@@ -14,6 +15,7 @@ users = {
 
 login_tokens = {}
 prompt_history = {}
+request_log = {}
 
 class User(BaseModel):
     username: str
@@ -22,7 +24,24 @@ class User(BaseModel):
 class Prompt(BaseModel):
     prompt: str
 
-async def get_username(token = Header(..., alias="Authorization")):
+
+def check_ratelimit():
+    pass
+
+def save_history():
+    with open(f"prompt-history.json", "w") as f:
+        f.write(json.dumps(prompt_history))
+
+def load_history():
+    if os.path.exists("prompt-history.json"):
+        with open(f"prompt-history.json") as f:
+            return json.loads(f.read())
+    return {}
+
+prompt_history.update(load_history())
+        
+
+def get_username(token = Header(..., alias="Authorization")):
     token = token.split()[1]
     if token not in login_tokens:
         raise HTTPException(status_code=401, detail="token is not valid")
@@ -47,8 +66,7 @@ async def prompt(prompt: Prompt, username = Depends(get_username)):
         "prompt": prompt.prompt,
         "response": response
         })
-    with open(f"{username}-history.json", "w") as f:
-        f.write(json.dumps(prompt_history[username]))
+    save_history()
     return {"response": response}
 
 @app.get("/history/") 
