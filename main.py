@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from secrets import token_urlsafe
 from fastapi import FastAPI, HTTPException, Depends, Header
@@ -46,6 +47,8 @@ async def prompt(prompt: Prompt, username = Depends(get_username)):
         "prompt": prompt.prompt,
         "response": response
         })
+    with open(f"{username}-history.json", "w") as f:
+        f.write(json.dumps(prompt_history[username]))
     return {"response": response}
 
 @app.get("/history/") 
